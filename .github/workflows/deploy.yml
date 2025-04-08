@@ -30,9 +30,7 @@ jobs:
 
       # Step 5: Zip the contents of the package folder
       - name: Create Zip file for Lambda function
-        run: |
-          cd package
-          zip -r ../code.zip .  # Zip everything in the package folder and move it to the root of the zip file
+        run: zip -r package/code.zip .
 
       # Step 6: Deploy to AWS Lambda
       - name: AWS CLI v2
