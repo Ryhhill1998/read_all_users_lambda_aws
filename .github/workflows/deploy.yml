@@ -21,9 +21,9 @@ jobs:
       # Step 3: Install dependencies
       - name: Install dependencies
         run: |
+          mkdir package
           python -m pip install --upgrade pip
-          pip install psycopg2-binary -t ./package
-          pip install pydantic-settings -t ./package
+          pip install -r requirements.txt -t ./package
 
       # Step 4: Copy Lambda function code into the package folder
       - name: Add Lambda function code
