@@ -1,19 +1,21 @@
-import psycopg2
 from botocore.client import BaseClient
-from psycopg2.extras import RealDictCursor
-from pydantic import BaseModel
 import boto3
 import json
+import os
+import mysql.connector
+from mysql.connector.pooling import PooledMySQLConnection
+from dataclasses import dataclass, asdict
 
-from settings import Settings
 
-
-class User(BaseModel):
+@dataclass
+class User:
     id: str
     refresh_token: str
 
+    dict = asdict
 
-def get_all_users(conn: psycopg2.extensions.connection) -> list[User]:
+
+def get_all_users(conn: PooledMySQLConnection) -> list[User]:
     with conn.cursor() as cur:
         select_statement = "SELECT * FROM spotify_user;"
         cur.execute(select_statement)
@@ -24,19 +26,16 @@ def get_all_users(conn: psycopg2.extensions.connection) -> list[User]:
 
 
 def add_user_data_to_queue(sqs: BaseClient, user: User, queue_url: str):
-    message = json.dumps(user.model_dump())
+    message = json.dumps(user.dict)
     sqs.send_message(QueueUrl=queue_url, MessageBody=message)
 
 
 def lambda_handler(event, context):
-    settings = Settings()
-
-    conn = psycopg2.connect(
-        host=settings.db_host,
-        database=settings.db_name,
-        user=settings.db_user,
-        password=settings.db_pass,
-        cursor_factory=RealDictCursor
+    conn = mysql.connector.connect(
+        host=os.environ.get("DB_HOST"),
+        database=os.environ.get("DB_NAME"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASS")
     )
 
     all_users = get_all_users(conn)
@@ -44,4 +43,4 @@ def lambda_handler(event, context):
     sqs = boto3.client("sqs")
 
     for user in all_users:
-        add_user_data_to_queue(sqs=sqs, user=user, queue_url=settings.queue_url)
+        add_user_data_to_queue(sqs=sqs, user=user, queue_url=os.environ.get("QUEUE_URL"))
