@@ -18,8 +18,6 @@ class User:
     id: str
     refresh_token: str
 
-    dict = asdict
-
 
 def get_all_users(conn: PooledMySQLConnection) -> list[User]:
     with conn.cursor(dictionary=True) as cur:
@@ -32,7 +30,7 @@ def get_all_users(conn: PooledMySQLConnection) -> list[User]:
 
 
 def add_user_data_to_queue(sqs: BaseClient, user: User, queue_url: str):
-    message = json.dumps(user.dict)
+    message = json.dumps(asdict(user))
     sqs.send_message(QueueUrl=queue_url, MessageBody=message)
 
 
