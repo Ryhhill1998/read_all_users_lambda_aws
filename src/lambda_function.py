@@ -39,10 +39,9 @@ def add_user_data_to_queue(sqs: BaseClient, user: User, queue_url: str):
 def lambda_handler(event, context):
     connection = mysql.connector.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
     all_users = get_all_users(connection)
+    connection.close()
 
     sqs = boto3.client("sqs")
 
     for user in all_users:
         add_user_data_to_queue(sqs=sqs, user=user, queue_url=QUEUE_URL)
-
-    connection.close()
