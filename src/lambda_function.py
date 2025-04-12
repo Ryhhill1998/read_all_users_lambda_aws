@@ -38,9 +38,13 @@ def lambda_handler(event, context):
         password=os.environ.get("DB_PASS")
     )
 
-    all_users = get_all_users(conn)
+    with conn.cursor() as cur:
+        cur.execute("SELECT VERSION();")
+        print(cur.fetchone())
 
-    sqs = boto3.client("sqs")
-
-    for user in all_users:
-        add_user_data_to_queue(sqs=sqs, user=user, queue_url=os.environ.get("QUEUE_URL"))
+    # all_users = get_all_users(conn)
+    #
+    # sqs = boto3.client("sqs")
+    #
+    # for user in all_users:
+    #     add_user_data_to_queue(sqs=sqs, user=user, queue_url=os.environ.get("QUEUE_URL"))
