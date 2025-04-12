@@ -6,6 +6,12 @@ import mysql.connector
 from mysql.connector.pooling import PooledMySQLConnection
 from dataclasses import dataclass, asdict
 
+DB_HOST = os.environ["DB_HOST"]
+DB_NAME = os.environ["DB_NAME"]
+DB_USER = os.environ["DB_USER"]
+DB_PASS = os.environ["DB_PASS"]
+QUEUE_URL = os.environ.get("QUEUE_URL")
+
 
 @dataclass
 class User:
@@ -31,20 +37,10 @@ def add_user_data_to_queue(sqs: BaseClient, user: User, queue_url: str):
 
 
 def lambda_handler(event, context):
-    conn = mysql.connector.connect(
-        host=os.environ.get("DB_HOST"),
-        database=os.environ.get("DB_NAME"),
-        user=os.environ.get("DB_USER"),
-        password=os.environ.get("DB_PASS")
-    )
+    connection = mysql.connector.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
+    all_users = get_all_users(connection)
 
-    with conn.cursor() as cur:
-        cur.execute("SELECT VERSION();")
-        print(cur.fetchone())
+    sqs = boto3.client("sqs")
 
-    # all_users = get_all_users(conn)
-    #
-    # sqs = boto3.client("sqs")
-    #
-    # for user in all_users:
-    #     add_user_data_to_queue(sqs=sqs, user=user, queue_url=os.environ.get("QUEUE_URL"))
+    for user in all_users:
+        add_user_data_to_queue(sqs=sqs, user=user, queue_url=QUEUE_URL)
