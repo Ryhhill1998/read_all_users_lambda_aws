@@ -38,21 +38,11 @@ def add_user_data_to_queue(sqs: BaseClient, user: User, queue_url: str):
 
 def lambda_handler(event, context):
     connection = mysql.connector.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
-    delete_table_statements = [
-        "DROP TABLE IF EXISTS top_artist",
-        "DROP TABLE IF EXISTS top_track"
-    ]
+    all_users = get_all_users(connection)
 
-    with connection.cursor() as cursor:
-        for delete_statement in delete_table_statements:
-            cursor.execute(delete_statement)
-            connection.commit()
+    sqs = boto3.client("sqs")
+
+    for user in all_users:
+        add_user_data_to_queue(sqs=sqs, user=user, queue_url=QUEUE_URL)
 
     connection.close()
-
-    # all_users = get_all_users(connection)
-    #
-    # sqs = boto3.client("sqs")
-    #
-    # for user in all_users:
-    #     add_user_data_to_queue(sqs=sqs, user=user, queue_url=QUEUE_URL)
