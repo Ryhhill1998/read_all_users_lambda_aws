@@ -22,7 +22,7 @@ class User:
 
 
 def get_all_users(conn: PooledMySQLConnection) -> list[User]:
-    with conn.cursor() as cur:
+    with conn.cursor(dictionary=True) as cur:
         select_statement = "SELECT * FROM spotify_user;"
         cur.execute(select_statement)
         results = cur.fetchall()
@@ -41,11 +41,12 @@ def lambda_handler(event, context):
 
     try:
         all_users = get_all_users(connection)
+        print(f"{all_users = }")
 
-        sqs = boto3.client("sqs")
-
-        for user in all_users:
-            add_user_data_to_queue(sqs=sqs, user=user, queue_url=QUEUE_URL)
+        # sqs = boto3.client("sqs")
+        #
+        # for user in all_users:
+        #     add_user_data_to_queue(sqs=sqs, user=user, queue_url=QUEUE_URL)
     except Exception as e:
         print(f"Something went wrong - {e}")
     finally:
