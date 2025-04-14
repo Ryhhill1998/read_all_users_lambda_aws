@@ -31,7 +31,8 @@ def get_all_users(conn: PooledMySQLConnection) -> list[User]:
 
 def add_user_data_to_queue(sqs: BaseClient, user: User, queue_url: str):
     message = json.dumps(asdict(user))
-    sqs.send_message(QueueUrl=queue_url, MessageBody=message)
+    res = sqs.send_message(QueueUrl=queue_url, MessageBody=message)
+    print(f"{res = }")
 
 
 def lambda_handler(event, context):
@@ -39,10 +40,12 @@ def lambda_handler(event, context):
 
     try:
         all_users = get_all_users(connection)
+        print(f"{all_users = }")
 
         sqs = boto3.client("sqs")
 
         for user in all_users:
+            print(f"{user = }")
             add_user_data_to_queue(sqs=sqs, user=user, queue_url=QUEUE_URL)
     except Exception as e:
         print(f"Something went wrong - {e}")
