@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from dataclasses import dataclass
 
 import boto3
@@ -19,10 +20,10 @@ def get_all_users(connection: PooledMySQLConnection) -> list[User]:
     cursor = connection.cursor(dictionary=True)
 
     select_statement = "SELECT * FROM spotify_user;"
-    logger.info(f"Executing DB select statement: {select_statement}")
+    logger.info("Retrieving all users from DB")
     cursor.execute(select_statement)
     results = cursor.fetchall()
-    logger.info(f"Select statement results: {results}")
+    logger.info(f"Results: {results}")
     users = [User(**entry) for entry in results]
     logger.info(f"Users extracted from DB: {users}")
 
