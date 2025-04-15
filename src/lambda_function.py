@@ -1,10 +1,12 @@
-from botocore.client import BaseClient
-import boto3
 import json
 import os
+from dataclasses import dataclass
+
+import boto3
+from botocore.client import BaseClient
 import mysql.connector
 from mysql.connector.pooling import PooledMySQLConnection
-from dataclasses import dataclass
+from loguru import logger
 
 
 @dataclass
@@ -17,9 +19,12 @@ def get_all_users(connection: PooledMySQLConnection) -> list[User]:
     cursor = connection.cursor(dictionary=True)
 
     select_statement = "SELECT * FROM spotify_user;"
+    logger.info(f"Executing DB select statement: {select_statement}")
     cursor.execute(select_statement)
     results = cursor.fetchall()
+    logger.info(f"Select statement results: {results}")
     users = [User(**entry) for entry in results]
+    logger.info(f"Users extracted from DB: {users}")
 
     cursor.close()
 
@@ -28,8 +33,9 @@ def get_all_users(connection: PooledMySQLConnection) -> list[User]:
 
 def add_user_data_to_queue(sqs: BaseClient, user: User, queue_url: str):
     message = json.dumps({"user_id": user.id, "refresh_token": user.refresh_token})
+    logger.info(f"Sending message to SQS queue: {message}")
     res = sqs.send_message(QueueUrl=queue_url, MessageBody=message)
-    print(f"{res = }")
+    logger.info(f"Message sent to SQS queue. Response: {res}")
 
 
 def lambda_handler(event, context):
@@ -40,17 +46,16 @@ def lambda_handler(event, context):
     queue_url = os.environ.get("QUEUE_URL")
 
     connection = mysql.connector.connect(host=db_host, database=db_name, user=db_user, password=db_pass)
+    logger.info("Connecting to DB")
 
     try:
         all_users = get_all_users(connection)
-        print(f"{all_users = }")
 
         sqs = boto3.client("sqs")
 
         for user in all_users:
-            print(f"{user = }")
             add_user_data_to_queue(sqs=sqs, user=user, queue_url=queue_url)
     except Exception as e:
-        print(f"Something went wrong - {e}")
+        logger.error(f"Something went wrong - {e}")
     finally:
         connection.close()
