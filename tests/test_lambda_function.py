@@ -1,10 +1,42 @@
+import os
 import sys
+from unittest import mock
 from unittest.mock import Mock
 
 import pytest
 from loguru import logger
 
-from src.lambda_function import get_all_users, User, add_user_data_to_queue
+from src.lambda_function import get_all_users, User, add_user_data_to_queue, Settings, get_settings
+
+
+@pytest.fixture
+def mock_settings(monkeypatch):
+    with mock.patch.dict(os.environ, clear=True):
+        envvars = {
+            "DB_HOST": "DB_HOST",
+            "DB_NAME": "DB_NAME",
+            "DB_USER": "DB_USER",
+            "DB_PASS": "DB_PASS",
+            "QUEUE_URL": "QUEUE_URL"
+        }
+        for key, value in envvars.items():
+            monkeypatch.setenv(key, value)
+
+        yield
+
+
+def test_get_settings(mock_settings):
+    expected_settings = Settings(
+        db_host="DB_HOST",
+        db_name="DB_NAME",
+        db_user="DB_USER",
+        db_pass="DB_PASS",
+        queue_url="QUEUE_URL"
+    )
+
+    settings = get_settings()
+
+    assert settings == expected_settings
 
 
 @pytest.fixture

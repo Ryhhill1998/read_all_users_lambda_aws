@@ -1,6 +1,5 @@
 import json
 import os
-from dataclasses import dataclass
 
 import boto3
 from botocore.client import BaseClient
@@ -8,20 +7,7 @@ import mysql.connector
 from mysql.connector.pooling import PooledMySQLConnection
 from loguru import logger
 
-
-@dataclass
-class Settings:
-    db_host: str
-    db_name: str
-    db_user: str
-    db_pass: str
-    queue_url: str
-
-
-@dataclass
-class User:
-    id: str
-    refresh_token: str
+from src.models import Settings, User
 
 
 def get_settings() -> Settings:
