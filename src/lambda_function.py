@@ -7,7 +7,7 @@ import mysql.connector
 from mysql.connector.pooling import PooledMySQLConnection
 from loguru import logger
 
-from src.models import Settings, User
+from .models import Settings, User
 
 
 def get_settings() -> Settings:
